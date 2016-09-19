@@ -1,26 +1,29 @@
 #cloud-config
-coreos:
-    units:
-      - name: coreos-cloudinit-vagrant-mkdir.service
-        command: start
-        runtime: yes
-        content: |
-          [Service]
-          Type=oneshot
-          ExecStart=/bin/mkdir -p /var/lib/coreos-vagrant
-      - name: coreos-cloudinit-vagrant-user.path
-        command: start
-        runtime: yes
-        content: |
-          [Path]
-          PathExists=/var/lib/coreos-vagrant/vagrantfile-user-data
-          Unit=user-cloudinit@var-lib-coreos\x2dvagrant-vagrantfile\x2duser\x2ddata.service
-    oem:
-      id: vagrant
-      name: Vagrant
-      version-id: 0.1
-      home-url: http://www.vagrantup.com/
-      bug-report-url: https://github.com/coreos/coreos-overlay
-      
 ssh_authorized_keys:
-  - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key
+  - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCjNzkA1+0k7QqU1QGYTkMeQAYlwRf/qm9ZzRDppCK+SzxAs4EfftodqmAt1+hEn3go5PMGiPEJlT2XaH6XAN0s0rdrOY5+S91/guiUdi/VwgQA2yD6vvafAysUoVnpcbhtzwWu983eafAgd0DkFPIxKM7KMzQZ7SLjVi57llattUgEinYNjl2lULDAlqYsh/MT7oeoWoXy5D8n12Ojkfy1895dBgz7aEPLFLH6bZ6NttFMmN7wKe8DrV8Va1c0vwSb0+PrD7UD65XH+AlUOP3oxPYk5yFOYkXhXWRTIQ9jjjFGmzybjHmSpI1bjeuKJdwNP32nGnIBjRh0f9nIGhWv tmccarthy
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCjNzkA1+0k7QqU1QGYTkMeQAYlwRf/qm9ZzRDppCK+SzxAs4EfftodqmAt1+hEn3go5PMGiPEJlT2XaH6XAN0s0rdrOY5+S91/guiUdi/VwgQA2yD6vvafAysUoVnpcbhtzwWu983eafAgd0DkFPIxKM7KMzQZ7SLjVi57llattUgEinYNjl2lULDAlqYsh/MT7oeoWoXy5D8n12Ojkfy1895dBgz7aEPLFLH6bZ6NttFMmN7wKe8DrV8Va1c0vwSb0+PrD7UD65XH+AlUOP3oxPYk5yFOYkXhXWRTIQ9jjjFGmzybjHmSpI1bjeuKJdwNP32nGnIBjRh0f9nIGhWv core
+
+users:
+  - name: "user"
+    passwd: "$6FMi11BJFsAc"
+    groups:
+      - "root"
+
+coreos:
+  etcd2:
+    # generate a new token for each unique cluster from https://discovery.etcd.io/new?size=3
+    # specify the initial size of your cluster with ?size=X
+    discovery: https://discovery.etcd.io/d5593034829939e5c9d53c3994ea30da
+    # multi-region and multi-cloud deployments need to use $public_ipv4
+    advertise-client-urls: http://$private_ipv4:2379,http://$private_ipv4:4001
+    initial-advertise-peer-urls: http://$private_ipv4:2380
+    # listen on both the official ports and the legacy ports
+    # legacy ports can be omitted if your application doesn't depend on them
+    listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
+    listen-peer-urls: http://$private_ipv4:2380
+  units:
+    - name: etcd2.service
+      command: start
+    - name: fleet.service
+      command: start

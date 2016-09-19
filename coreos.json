@@ -6,7 +6,10 @@
         "sudo -i<enter>",
         "systemctl stop sshd.socket<enter>",
         "wget http://{{ .HTTPIP }}:{{ .HTTPPort }}/install.yml<enter>",
-        "coreos-install -d /dev/sda -C {{user `channel`}} -c install.yml<enter>",
+        "coreos-install -d /dev/vda -C {{user `channel`}} -c install.yml<enter>",
+        "mount /dev/vda6 /boot<enter>",
+        "echo set linux_append=coreos.autologin  > /boot/grub.cfg<enter>",
+        "mv install.yml /boot/cloud-config.yml<enter>",
         "reboot<enter>"
     ],
     "accelerator": "none",
@@ -16,14 +19,15 @@
       "http_directory": "files",
       "ssh_port": 22,
       "ssh_username": "core",
-      "ssh_private_key_file": "files/vagrant",
-      "ssh_wait_timeout": "10m",
-      "disk_size": 4096,
+      "ssh_private_key_file": "files/insecure_key",
+      "ssh_wait_timeout": "15m",
+      "disk_size": "8192",
       "format": "qcow2",
       "headless": true,
-      "boot_wait": "10s",
+      "boot_wait": "90s",
+      "qemuargs": [[ "-m", "1024" ]],
       "shutdown_command": "sudo -S shutdown -P now",
-      "output_directory": "builds/packer-coreos-{{user `channel`}}-{{user `version`}}-parallels"
+      "output_directory": "builds/packer-coreos-{{user `channel`}}-{{user `version`}}"
   }
   ],
   "provisioners": [
@@ -46,10 +50,16 @@
       ]
     }
   ],
+  "post-processors": [
+    {
+      "type": "shell-local",
+      "inline": ["echo foo"]
+    }
+],
   "variables": {
-    "channel": "alpha",
+    "channel": "stable",
     "version": "current",
     "checksum_type": "md5",
-    "checksum": "d1f242f40ef12a3dc26843b949c898b5"
+    "checksum": "2325ea5ebdffb2dbdaf75465be167878"
   }
 }
